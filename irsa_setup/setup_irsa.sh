@@ -13,8 +13,9 @@ serviceAccountName="aws-auth-validator"
 
 # Check if eksctl, awsCli and kubectl exist
 [[ ! `eksctl --help` ]] && echo "eksctl does not exist. Please install it first" && exit 1
-[[ ! `kubectl --help` ]] && echo "eksctl does not exist. Please install it first" && exit 1
-[[ ! `aws help` ]] && echo "eksctl does not exist. Please install it first" && exit 1
+[[ ! `kubectl --help` ]] && echo "kubectl does not exist. Please install it first" && exit 1
+[[ ! `aws help` ]] && echo "awscli does not exist. Please install it first" && exit 1
+[[ ! `jq --help` ]] && echo "jq does not exist. Please install it first" && exit 1
 
 # Check Kubernetes Version
 requiredK8sVersion="115"
@@ -27,15 +28,26 @@ K8sVersion=$(eksctl get cluster --name $clusterName | cut -f 2 | tr -d "\n" | tr
 #[[ $EksctlVersion -lt $requiredEksctlVersion ]] && echo "Need eksctl Version greater than 0.5.0 ..Exiting" && exit 1
 
 # Associate OIDC
-eksctl utils associate-iam-oidc-provider --name $clusterName --approve
+eksctl utils associate-iam-oidc-provider --cluster $clusterName --approve
 
-output=$(aws iam create-policy --region ${region} --policy-name aws-auth-validator --policy-document file://policy.json)
-policyARN=$(echo ${output} | jq -r .Policy.Arn)
+policyARN=$(aws iam list-policies | jq '.Policies[] | select(.PolicyName=="aws-auth-validator") | .Arn')
+if [ -z $policyARN ]; then
+	aws iam create-policy --region ${region} --policy-name aws-auth-validator --policy-document file://policy.json
+fi
+sleep 2
 echo "IAM Policy Created: ${policyARN}"
 
 # Create Service account
-eksctl create iamserviceaccount --name $serviceAccountName --namespace ${namespace} --cluster $clusterName --attach-policy-arn $policyARN --approve
-sleep 3
+eksctl delete iamserviceaccount --name $serviceAccountName --namespace ${namespace} --cluster $clusterName
+sleep 2
+for x in $(seq 10); do
+    eksctl create iamserviceaccount --name $serviceAccountName --namespace ${namespace} --cluster $clusterName --attach-policy-arn $policyARN --approve
+    getiamserviceaccount=$(eksctl get iamserviceaccount --name $serviceAccountName --namespace ${namespace} --cluster $clusterName -o json |jq '.[] | .status.roleARN')
+    if [[ ${getiamserviceaccount} != '' ]]; then
+        break
+    fi
+    sleep 1
+done
 
 RoleARN=$(kubectl -n ${namespace} get sa $serviceAccountName -o jsonpath='{.metadata.annotations.eks\.amazonaws\.com/role\-arn}')
 
