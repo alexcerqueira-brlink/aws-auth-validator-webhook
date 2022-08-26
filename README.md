@@ -32,7 +32,7 @@ Validation webhook to validate aws-auth configMap in the kube-system namespace
      ~~~
 
      ~~~bash
-     eg: `bash setup_irsa.sh us-east-1 training kube-system
+     eg: bash setup_irsa.sh us-east-1 training kube-system
      ~~~
 
 5. **PRODUCTION** - Apply the label to the aws-auth to make sure that it's detected by the webhook
@@ -43,6 +43,9 @@ Validation webhook to validate aws-auth configMap in the kube-system namespace
 6. Generate the manifest.yaml and apply.
      ~~~bash
      bash manifest_generate.sh --iamge public.ecr.aws/xxxxxxx/webhook:latest  --cluster <cluster_name> --region <region> --arn arn:aws:iam::XXXXXXXXXXXX:user/user
+     ~~~
+
+     ~~~bash
      kubectl apply -f manifest.yaml
      ~~~
 
