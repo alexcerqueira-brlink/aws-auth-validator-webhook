@@ -1,56 +1,3 @@
-#!/bin/bash
-
-set -e
-
-usage() {
-    cat <<EOF
-The following flags are required.
-       --iamge          Enter with the image.
-       --cluster        Enter with the cluster name.
-       --region         Enter with the region.
-       --arn            Enter the arn, separated by comma if necessary (Optional).
-EOF
-    exit 1
-}
-
-while [[ $# -gt 0 ]]; do
-    case ${1} in
-        --iamge)
-            PROG_IMAGE="$2"
-            shift
-            ;;
-        --cluster)
-            PROG_CLUSTER_NAME="$2"
-            shift
-            ;;
-        --region)
-            PROG_CLUSTER_REGION="$2"
-            shift
-           ;;
-        --arn)
-            PROG_ARN="$2"
-            shift
-           ;;
-            *)
-            usage
-            ;;
-    esac
-    shift
-done
-
-[ -z ${PROG_IMAGE} ] && usage
-[ -z ${PROG_CLUSTER_NAME} ] && usage
-[ -z ${PROG_CLUSTER_REGION} ] && usage
-PROG_CABUNDLE="$(kubectl get secret -n kube-system aws-auth-validator-certs -o json | jq '.data."cert.pem"' | tr -d '"')"
-
-if [ -z ${PROG_ARN} ]; then
-	TEXT_VALUE="#value"
-	PROG_ARN="ENTER ARN"
-else
-	TEXT_VALUE="value"
-fi
-
-cat << EOF > ./manifest.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -72,20 +19,20 @@ spec:
       serviceAccountName: aws-auth-validator
       containers:
         - name: aws-auth-validator
-          image: $PROG_IMAGE
+          image: public.ecr.aws/t4h9q3m4/webhook:latest
           env:
 
             # Mandatory values. Change these
             - name: CLUSTER_NAME
-              value: $PROG_CLUSTER_NAME
+              value: k8s-brlink-dev
             - name: CLUSTER_REGION
-              value: $PROG_CLUSTER_REGION
+              value: us-east-1
 
             # Optional parameter. Defaults to None
             # Specify any additional Roles/IAM-users that needs to be present in the aws-auth. This will prevent those roles/users getting locked out intentionally or otherwise.
             # Accept comma-saperated values without spaces. Eg - value: "arn:aws:iam::111122223333:role/AmazonEKSFargatePodExecutionRole,arn:aws:iam::111122223333:user/ops-user"
             - name: ADDITIONAL_ROLES
-              $TEXT_VALUE: "$PROG_ARN"
+              #value: "ENTER ARN"
 
             # Optional parameter. Defaults to None
             # IAM Roles defined via REJECT_ROLES environment variable in the Deployment will not be allowed in the aws-auth. This is particularly useful where a specific user/Role should be denied access and also helps in cases where cluster creator should not be defined in aws-auth as best practice. REJECT_ROLES env variable accepts comma-separated values
@@ -132,7 +79,7 @@ webhooks:
 - admissionReviewVersions:
   - v1beta1
   clientConfig:
-    caBundle: $PROG_CABUNDLE
+    caBundle: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUR1akNDQXFLZ0F3SUJBZ0lVSDBFMVFRM0F1UWtUaUUrRlNHM0I1WEJKUDRnd0RRWUpLb1pJaHZjTkFRRUwKQlFBd0ZURVRNQkVHQTFVRUF4TUthM1ZpWlhKdVpYUmxjekFlRncweU1qQTRNall5TWpFMU1EQmFGdzB5TXpBNApNall5TWpFMU1EQmFNREV4THpBdEJnTlZCQU1USm1GM2N5MWhkWFJvTFhaaGJHbGtZWFJ2Y2kxemRtTXVhM1ZpClpTMXplWE4wWlcwdWMzWmpNSUlCSWpBTkJna3Foa2lHOXcwQkFRRUZBQU9DQVE4QU1JSUJDZ0tDQVFFQXZCaVUKQ3lxRDhRWmYwMU5OTzZQOUorWlJoeTl3cFZqcTIvbjhWN29xQVhxNXU1NlJZSTJhN1IxRE14YUZjMjVUS3Arego0dURUdFEvT2tZZktxS2dZMTVlTXFUbnN6TS9BbWxqYkFmVjBDelE2dVdtRkxWOEZtN1laT3JqcXREdWgyT211Cm9xSlJSeHJSSVNtZldCenA0MWdWK0pWbkJuTHQ4N3J5MCtsamt0NER2RUwzWTdxZHkvSTN3RDdCeHl4Y0l6dWsKYUgwSWNCVURzcWF0cHFyOU5CV3RRTTZXcEtwOURSbXFKV09Qcmo2czlHT0h4bFE2emJ5VzlnemVHV0oxR0hhaQozSyt4aVlCQVQ4MUtSNkNsVjBTaG02QkREQU43WEU2VThNUCs0SmFNV0FXem5LK25vMHBNZzZtMjgxNGpJQklECmpuS2NKOEhPai84SEk4dHA4UUlEQVFBQm80SGxNSUhpTUE0R0ExVWREd0VCL3dRRUF3SUZvREFUQmdOVkhTVUUKRERBS0JnZ3JCZ0VGQlFjREFUQU1CZ05WSFJNQkFmOEVBakFBTUIwR0ExVWREZ1FXQkJRanRkN25IQjk4Q0RGZwpjcVdiak1vaFNLYm1xakFmQmdOVkhTTUVHREFXZ0JTM2VBN1lsREYxc0E3RVRYRXJGU1hneGFmNk5qQnRCZ05WCkhSRUVaakJrZ2haaGQzTXRZWFYwYUMxMllXeHBaR0YwYjNJdGMzWmpnaUpoZDNNdFlYVjBhQzEyWVd4cFpHRjAKYjNJdGMzWmpMbXQxWW1VdGMzbHpkR1Z0Z2laaGQzTXRZWFYwYUMxMllXeHBaR0YwYjNJdGMzWmpMbXQxWW1VdApjM2x6ZEdWdExuTjJZekFOQmdrcWhraUc5dzBCQVFzRkFBT0NBUUVBditUNDdwS0hpazZmWmttVDdYcWtHM0QrCk9pR2kwN2tEbG8xOXh5NEpqR2dEdmpnT05MZ1hxaVdiUFQrU0RKZjVVc1ZHUTlMRVU1YndydXJNMDJzUHVPYlMKVzdsWVVkS3JEVVJaUS9XQ0FQMGNOcTRnUHgwc0lSQVZNVjFib1BEN0lxL1JHWXJFU1JGZFBhWlZPeFFrWVZkYQpseDlCZ1prZTA1V0doc0c4WnpjaGp1Mlhoc0U3dGpQRmp1RzlBVkw5U0dwUXFLMDdtVTFBMFZsRlBNRXRlUC9kClNKMkdCNW9vUHhqbzV0NkV5elNPbFBOZjNwY3pVV1A4UTFyR3ZSemdGSjgyRGkwY0MvWnJVMlZ4VGxQaFZySVoKemNRUC9NWXBpbmFtVER1WXRHanpubEF2Y3B6aTVsMnlPVkdOM1BtZWNRSlZtK3RjWmJETlBGUWlPOEZQY2c9PQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
     service:
       name: aws-auth-validator-svc
       namespace: kube-system
@@ -163,4 +110,3 @@ webhooks:
     scope: Namespaced
   sideEffects: None
   timeoutSeconds: 30
-EOF
