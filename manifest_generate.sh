@@ -12,10 +12,6 @@ PROG_CABUNDLE="$(bash ./generatecerts.sh --service aws-auth-validator-svc --secr
 [ -z $PROG_CLUSTER_REGION ] && echo "Enter with the Cluster Region" && exit 0
 [ -z $PROG_CABUNDLE ] && exit 0
 
-#export PROG_IMAGE="public.ecr.aws/t4h9q3m4/webhook:latest"
-#export PROG_CLUSTER_NAME="k8s-brlink-dev"
-#export PROG_CLUSTER_REGION="us-east-1"
-
 cat << EOF > ./manifest.yaml
 apiVersion: apps/v1
 kind: Deployment
