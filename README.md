@@ -50,9 +50,7 @@ Validation webhook to validate aws-auth configMap in the kube-system namespace
      ~~~
 
 ### Troubleshooting:
-     ~~~bash
      kubectl get pods -n kube-system -l app=aws-auth-validator
      kubectl describe deploy -n kube-system aws-auth-validator
      kubectl logs -n kube-system -l app=aws-auth-validator -f
      kubectl edit -n kube-system cm aws-auth
-     ~~~
