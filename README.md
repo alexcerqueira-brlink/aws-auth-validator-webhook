@@ -2,7 +2,9 @@
 Validation webhook to validate aws-auth configMap in the kube-system namespace
 ### Steps to setup:
 1. Label the namespace:
-   `kubectl label ns kube-system name=kube-system`
+   ~~~bash
+   kubectl label ns kube-system name=kube-system
+   ~~~
 
 2. Create Docker image from the Dockerfile
 
@@ -20,18 +22,29 @@ Validation webhook to validate aws-auth configMap in the kube-system namespace
     ~~~
 
 3. Generate certificates using the bash script
-    `bash generatecerts.sh --service aws-auth-validator-svc --secret aws-auth-validator-certs --namespace kube-system`
+     ~~~bash
+     bash generatecerts.sh --service aws-auth-validator-svc --secret aws-auth-validator-certs --namespace kube-system
+     ~~~
 
 4. Enable OIDC provider, create IAM Policy and create IAM service account:
-    `bash setup_irsa.sh <region> <cluster_name> <namespace>`
-    eg: `bash setup_irsa.sh us-east-1 training kube-system`
+     ~~~bash
+     bash setup_irsa.sh <region> <cluster_name> <namespace>
+     ~~~
+
+     ~~~bash
+     eg: `bash setup_irsa.sh us-east-1 training kube-system
+     ~~~
 
 5. **PRODUCTION** - Apply the label to the aws-auth to make sure that it's detected by the webhook
-    `kubectl -n kube-system label cm aws-auth name=aws-auth`
+     ~~~bash
+     kubectl -n kube-system label cm aws-auth name=aws-auth
+     ~~~
 
 6. Generate the manifest.yaml and apply.
-    `bash manifest_generate.sh --iamge public.ecr.aws/xxxxxxx/webhook:latest  --cluster <cluster_name> --region <region> --arn arn:aws:iam::XXXXXXXXXXXX:user/user`
-    `kubectl apply -f manifest.yaml`
+     ~~~bash
+     bash manifest_generate.sh --iamge public.ecr.aws/xxxxxxx/webhook:latest  --cluster <cluster_name> --region <region> --arn arn:aws:iam::XXXXXXXXXXXX:user/user
+     kubectl apply -f manifest.yaml
+     ~~~
 
 ### Troubleshooting:
 
