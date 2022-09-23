@@ -15,7 +15,7 @@ Validation webhook to validate aws-auth configMap in the kube-system namespace
     ~~~
 
     ~~~bash
-    aws ecr-public get-login-password --region <region> | docker login --username AWS --password-stdin public.ecr.aws/xxxxxxx
+    aws ecr-public get-login-password --region <region> | docker login --username AWS --password-stdin public.ecr.aws/xxxxxxx/webhook
     docker build --network=host -t webhook .
     docker tag webhook:latest public.ecr.aws/xxxxxxx/webhook:latest
     docker push public.ecr.aws/xxxxxxx/webhook:latest
@@ -32,7 +32,7 @@ Validation webhook to validate aws-auth configMap in the kube-system namespace
      ~~~
 
      ~~~bash
-     eg: bash setup_irsa.sh us-east-1 training kube-system
+     eg: bash setup_irsa.sh us-east-1 cluster-homolog kube-system
      ~~~
 
 5. **PRODUCTION** - Apply the label to the aws-auth to make sure that it's detected by the webhook
@@ -45,7 +45,7 @@ Validation webhook to validate aws-auth configMap in the kube-system namespace
      bash manifest_generate.sh --iamge public.ecr.aws/xxxxxxx/webhook:latest  \
           --cluster <cluster_name> \
           --region <region> \
-          --arn arn:aws:iam::XXXXXXXXXXXX:user/user
+          --arn arn:aws:iam::9999999999:user/user
      ~~~
 
      ~~~bash
