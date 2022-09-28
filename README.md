@@ -42,7 +42,7 @@ Validation webhook to validate aws-auth configMap in the kube-system namespace
 
 6. Generate the manifest.yaml and apply.
      ~~~bash
-     bash manifest_generate.sh --iamge public.ecr.aws/xxxxxxx/webhook:latest  \
+     bash manifest_generate.sh --image public.ecr.aws/xxxxxxx/webhook:latest  \
           --cluster <cluster_name> \
           --region <region> \
           --arn arn:aws:iam::9999999999:user/user
