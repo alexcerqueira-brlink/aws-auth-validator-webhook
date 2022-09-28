@@ -5,7 +5,7 @@ set -e
 usage() {
     cat <<EOF
 The following flags are required.
-       --iamge          Enter with the image.
+       --image          Enter with the image.
        --cluster        Enter with the cluster name.
        --region         Enter with the region.
        --arn            Enter the arn, separated by comma if necessary (Optional).
